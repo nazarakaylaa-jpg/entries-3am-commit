@@ -53,7 +53,7 @@
 //      forget" (120 — "shipping it before we forget" is a decent
 //      closer, but "finally works / finally understand" is generic)
 
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const ENTRY =
@@ -76,4 +76,12 @@ if (ENTRY.includes("\n") || ENTRY.includes("\r")) {
 
 mkdirSync(outDir, { recursive: true });
 writeFileSync(join(outDir, "entry.txt"), ENTRY, "utf8");
+
+// Read back and verify: the whole job is writing this one file
+// correctly, so a silent short write must fail loudly instead of
+// shipping a truncated entry to the gate.
+const written = readFileSync(join(outDir, "entry.txt"), "utf8");
+if (written !== ENTRY) {
+  throw new Error("entry.txt round-trip mismatch");
+}
 console.log(`wrote ${join(outDir, "entry.txt")} (${chars} characters)`);
